@@ -50,6 +50,11 @@ static bool hasSinCosPiStret(const Triple &T) {
   return true;
 }
 
+std::string svmlMangle(StringRef FnName, const bool IsFast) {
+  std::string FullName = FnName;
+  return IsFast ? FullName : FullName + "_ha";
+}
+
 /// Initialize the set of available library functions based on the specified
 /// target triple. This should be carefully written so that a missing target
 /// triple gets a sane set of defaults.
@@ -1492,109 +1497,9 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
   }
   case SVML: {
     const VecDesc VecFuncs[] = {
-        {"sin", "__svml_sin2", 2},
-        {"sin", "__svml_sin4", 4},
-        {"sin", "__svml_sin8", 8},
-
-        {"sinf", "__svml_sinf4", 4},
-        {"sinf", "__svml_sinf8", 8},
-        {"sinf", "__svml_sinf16", 16},
-
-        {"llvm.sin.f64", "__svml_sin2", 2},
-        {"llvm.sin.f64", "__svml_sin4", 4},
-        {"llvm.sin.f64", "__svml_sin8", 8},
-
-        {"llvm.sin.f32", "__svml_sinf4", 4},
-        {"llvm.sin.f32", "__svml_sinf8", 8},
-        {"llvm.sin.f32", "__svml_sinf16", 16},
-
-        {"cos", "__svml_cos2", 2},
-        {"cos", "__svml_cos4", 4},
-        {"cos", "__svml_cos8", 8},
-
-        {"cosf", "__svml_cosf4", 4},
-        {"cosf", "__svml_cosf8", 8},
-        {"cosf", "__svml_cosf16", 16},
-
-        {"llvm.cos.f64", "__svml_cos2", 2},
-        {"llvm.cos.f64", "__svml_cos4", 4},
-        {"llvm.cos.f64", "__svml_cos8", 8},
-
-        {"llvm.cos.f32", "__svml_cosf4", 4},
-        {"llvm.cos.f32", "__svml_cosf8", 8},
-        {"llvm.cos.f32", "__svml_cosf16", 16},
-
-        {"pow", "__svml_pow2", 2},
-        {"pow", "__svml_pow4", 4},
-        {"pow", "__svml_pow8", 8},
-
-        {"powf", "__svml_powf4", 4},
-        {"powf", "__svml_powf8", 8},
-        {"powf", "__svml_powf16", 16},
-
-        { "__pow_finite", "__svml_pow2", 2 },
-        { "__pow_finite", "__svml_pow4", 4 },
-        { "__pow_finite", "__svml_pow8", 8 },
-
-        { "__powf_finite", "__svml_powf4", 4 },
-        { "__powf_finite", "__svml_powf8", 8 },
-        { "__powf_finite", "__svml_powf16", 16 },
-
-        {"llvm.pow.f64", "__svml_pow2", 2},
-        {"llvm.pow.f64", "__svml_pow4", 4},
-        {"llvm.pow.f64", "__svml_pow8", 8},
-
-        {"llvm.pow.f32", "__svml_powf4", 4},
-        {"llvm.pow.f32", "__svml_powf8", 8},
-        {"llvm.pow.f32", "__svml_powf16", 16},
-
-        {"exp", "__svml_exp2", 2},
-        {"exp", "__svml_exp4", 4},
-        {"exp", "__svml_exp8", 8},
-
-        {"expf", "__svml_expf4", 4},
-        {"expf", "__svml_expf8", 8},
-        {"expf", "__svml_expf16", 16},
-
-        { "__exp_finite", "__svml_exp2", 2 },
-        { "__exp_finite", "__svml_exp4", 4 },
-        { "__exp_finite", "__svml_exp8", 8 },
-
-        { "__expf_finite", "__svml_expf4", 4 },
-        { "__expf_finite", "__svml_expf8", 8 },
-        { "__expf_finite", "__svml_expf16", 16 },
-
-        {"llvm.exp.f64", "__svml_exp2", 2},
-        {"llvm.exp.f64", "__svml_exp4", 4},
-        {"llvm.exp.f64", "__svml_exp8", 8},
-
-        {"llvm.exp.f32", "__svml_expf4", 4},
-        {"llvm.exp.f32", "__svml_expf8", 8},
-        {"llvm.exp.f32", "__svml_expf16", 16},
-
-        {"log", "__svml_log2", 2},
-        {"log", "__svml_log4", 4},
-        {"log", "__svml_log8", 8},
-
-        {"logf", "__svml_logf4", 4},
-        {"logf", "__svml_logf8", 8},
-        {"logf", "__svml_logf16", 16},
-
-        { "__log_finite", "__svml_log2", 2 },
-        { "__log_finite", "__svml_log4", 4 },
-        { "__log_finite", "__svml_log8", 8 },
-
-        { "__logf_finite", "__svml_logf4", 4 },
-        { "__logf_finite", "__svml_logf8", 8 },
-        { "__logf_finite", "__svml_logf16", 16 },
-
-        {"llvm.log.f64", "__svml_log2", 2},
-        {"llvm.log.f64", "__svml_log4", 4},
-        {"llvm.log.f64", "__svml_log8", 8},
-
-        {"llvm.log.f32", "__svml_logf4", 4},
-        {"llvm.log.f32", "__svml_logf8", 8},
-        {"llvm.log.f32", "__svml_logf16", 16},
+#define GET_SVML_VARIANTS
+#include "llvm/IR/SVML.inc"
+#undef GET_SVML_VARIANTS
     };
     addVectorizableFunctions(VecFuncs);
     break;
@@ -1615,19 +1520,26 @@ bool TargetLibraryInfoImpl::isFunctionVectorizable(StringRef funcName) const {
   return I != VectorDescs.end() && StringRef(I->ScalarFnName) == funcName;
 }
 
-StringRef TargetLibraryInfoImpl::getVectorizedFunction(StringRef F,
-                                                       unsigned VF) const {
+std::string TargetLibraryInfoImpl::getVectorizedFunction(StringRef F,
+                                                         unsigned VF,
+                                                         bool &FromSVML,
+                                                         bool IsFast) const {
+  FromSVML = ClVectorLibrary == SVML;
   F = sanitizeFunctionName(F);
   if (F.empty())
     return F;
   std::vector<VecDesc>::const_iterator I = std::lower_bound(
       VectorDescs.begin(), VectorDescs.end(), F, compareWithScalarFnName);
   while (I != VectorDescs.end() && StringRef(I->ScalarFnName) == F) {
-    if (I->VectorizationFactor == VF)
+    if (I->VectorizationFactor == VF) {
+      if (FromSVML) {
+        return svmlMangle(I->VectorFnName, IsFast);
+      }
       return I->VectorFnName;
+    }
     ++I;
   }
-  return StringRef();
+  return std::string();
 }
 
 StringRef TargetLibraryInfoImpl::getScalarizedFunction(StringRef F,

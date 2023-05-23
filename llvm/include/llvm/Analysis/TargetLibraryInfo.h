@@ -38,6 +38,12 @@ struct VecDesc {
     NumLibFuncs
   };
 
+enum SVMLAccuracy {
+  SVML_DEFAULT,
+  SVML_HA,
+  SVML_EP
+};
+
 /// Implementation of the target library information.
 ///
 /// This class constructs tables that hold the target library information and
@@ -150,7 +156,8 @@ public:
   /// Return true if the function F has a vector equivalent with vectorization
   /// factor VF.
   bool isFunctionVectorizable(StringRef F, unsigned VF) const {
-    return !getVectorizedFunction(F, VF).empty();
+     bool Ignored;
+     return !getVectorizedFunction(F, VF, Ignored, false).empty();
   }
 
   /// Return true if the function F has a vector equivalent with any
@@ -159,7 +166,8 @@ public:
 
   /// Return the name of the equivalent of F, vectorized with factor VF. If no
   /// such mapping exists, return the empty string.
-  StringRef getVectorizedFunction(StringRef F, unsigned VF) const;
+  std::string getVectorizedFunction(StringRef F, unsigned VF, bool &FromSVML,
+                                    bool IsFast) const;
 
   /// Return true if the function F has a scalar equivalent, and set VF to be
   /// the vectorization factor.
@@ -253,8 +261,9 @@ public:
   bool isFunctionVectorizable(StringRef F) const {
     return Impl->isFunctionVectorizable(F);
   }
-  StringRef getVectorizedFunction(StringRef F, unsigned VF) const {
-    return Impl->getVectorizedFunction(F, VF);
+  std::string getVectorizedFunction(StringRef F, unsigned VF, bool &FromSVML,
+                                    bool IsFast) const {
+    return Impl->getVectorizedFunction(F, VF, FromSVML, IsFast);
   }
 
   /// Tests if the function is both available and a candidate for optimized code
