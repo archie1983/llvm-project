@@ -326,6 +326,23 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
       return CSR_64_Intel_OCL_BI_SaveList;
     break;
   }
+  case CallingConv::Intel_SVML: {
+    if (Is64Bit) {
+      if (HasAVX512)
+        return IsWin64 ? CSR_Win64_Intel_SVML_AVX512_SaveList :
+                         CSR_64_Intel_SVML_AVX512_SaveList;
+      if (HasAVX)
+        return IsWin64 ? CSR_Win64_Intel_SVML_AVX_SaveList :
+                         CSR_64_Intel_SVML_AVX_SaveList;
+
+      return IsWin64 ? CSR_Win64_Intel_SVML_SaveList :
+                       CSR_64_Intel_SVML_SaveList;
+    } else { // Is32Bit
+        if (HasAVX512)
+            return CSR_32_Intel_SVML_AVX512_SaveList;
+        return CSR_32_Intel_SVML_SaveList;
+    }
+  }
   case CallingConv::HHVM:
     return CSR_64_HHVM_SaveList;
   case CallingConv::X86_RegCall:
@@ -439,6 +456,23 @@ X86RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
     if (!HasAVX && !IsWin64 && Is64Bit)
       return CSR_64_Intel_OCL_BI_RegMask;
     break;
+  }
+  case CallingConv::Intel_SVML: {
+    if (Is64Bit) {
+      if (HasAVX512)
+        return IsWin64 ? CSR_Win64_Intel_SVML_AVX512_RegMask :
+                         CSR_64_Intel_SVML_AVX512_RegMask;
+      if (HasAVX)
+        return IsWin64 ? CSR_Win64_Intel_SVML_AVX_RegMask :
+                         CSR_64_Intel_SVML_AVX_RegMask;
+
+      return IsWin64 ? CSR_Win64_Intel_SVML_RegMask :
+                       CSR_64_Intel_SVML_RegMask;
+    } else { // Is32Bit
+        if (HasAVX512)
+            return CSR_32_Intel_SVML_AVX512_RegMask;
+        return CSR_32_Intel_SVML_RegMask;
+    }
   }
   case CallingConv::HHVM:
     return CSR_64_HHVM_RegMask;

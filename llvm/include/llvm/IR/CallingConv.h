@@ -222,6 +222,9 @@ namespace CallingConv {
     // Calling convention between AArch64 Advanced SIMD functions
     AArch64_VectorCall = 97,
 
+    /// Intel_SVML - Calling conventions for Intel Short Math Vector Library
+    Intel_SVML = 98,
+
     /// The highest possible calling convention ID. Must be some 2^k - 1.
     MaxID = 1023
   };

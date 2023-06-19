@@ -100,4 +100,5 @@ add_llvm_library(LLVMAnalysis
 
   DEPENDS
   intrinsics_gen
+  svml_gen
   )

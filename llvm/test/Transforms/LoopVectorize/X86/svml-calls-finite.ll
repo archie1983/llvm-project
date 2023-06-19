@@ -39,7 +39,8 @@ for.end:                                          ; preds = %for.body
 declare double @__exp_finite(double) #0
 
 ; CHECK-LABEL: @exp_f64
-; CHECK: <4 x double> @__svml_exp4
+; CHECK: <2 x double> @__svml_exp2
+; CHECK: <2 x double> @__svml_exp2
 ; CHECK: ret
 define void @exp_f64(double* nocapture %varray) {
 entry:
@@ -99,7 +100,8 @@ for.end:                                          ; preds = %for.body
 declare double @__log_finite(double) #0
 
 ; CHECK-LABEL: @log_f64
-; CHECK: <4 x double> @__svml_log4
+; CHECK: <2 x double> @__svml_log2
+; CHECK: <2 x double> @__svml_log2
 ; CHECK: ret
 define void @log_f64(double* nocapture %varray) {
 entry:
@@ -159,7 +161,8 @@ for.end:                                          ; preds = %for.body
 declare double @__pow_finite(double, double) #0
 
 ; CHECK-LABEL: @pow_f64
-; CHECK: <4 x double> @__svml_pow4
+; CHECK: <2 x double> @__svml_pow2
+; CHECK: <2 x double> @__svml_pow2
 ; CHECK: ret
 define void @pow_f64(double* nocapture %varray, double* nocapture readonly %exp) {
 entry:

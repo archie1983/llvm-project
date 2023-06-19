@@ -5,3 +5,7 @@ set(LLVM_TARGET_DEFINITIONS Intrinsics.td)
 tablegen(LLVM IntrinsicEnums.inc -gen-intrinsic-enums)
 tablegen(LLVM IntrinsicImpl.inc -gen-intrinsic-impl)
 add_public_tablegen_target(intrinsics_gen)
+
+set(LLVM_TARGET_DEFINITIONS SVML.td)
+tablegen(LLVM SVML.inc -gen-svml)
+add_public_tablegen_target(svml_gen)

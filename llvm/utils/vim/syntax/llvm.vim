@@ -94,6 +94,7 @@ syn keyword llvmKeyword
       \ inreg
       \ inteldialect
       \ intel_ocl_bicc
+      \ intel_svmlcc
       \ internal
       \ linkonce
       \ linkonce_odr

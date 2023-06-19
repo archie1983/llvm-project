@@ -61,6 +61,11 @@ static bool hasBcmp(const Triple &TT) {
   return TT.isOSFreeBSD() || TT.isOSSolaris() || TT.isOSDarwin();
 }
 
+std::string svmlMangle(StringRef FnName, const bool IsFast) {
+  std::string FullName = FnName;
+  return IsFast ? FullName : FullName + "_ha";
+}
+
 /// Initialize the set of available library functions based on the specified
 /// target triple. This should be carefully written so that a missing target
 /// triple gets a sane set of defaults.
@@ -1549,8 +1554,9 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
   }
   case SVML: {
     const VecDesc VecFuncs[] = {
-    #define TLI_DEFINE_SVML_VECFUNCS
-    #include "llvm/Analysis/VecFuncs.def"
+    #define GET_SVML_VARIANTS
+    #include "llvm/IR/SVML.inc"
+    #undef GET_SVML_VARIANTS
     };
     addVectorizableFunctions(VecFuncs);
     break;
@@ -1570,19 +1576,26 @@ bool TargetLibraryInfoImpl::isFunctionVectorizable(StringRef funcName) const {
   return I != VectorDescs.end() && StringRef(I->ScalarFnName) == funcName;
 }
 
-StringRef TargetLibraryInfoImpl::getVectorizedFunction(StringRef F,
-                                                       unsigned VF) const {
+std::string TargetLibraryInfoImpl::getVectorizedFunction(StringRef F,
+                                                         unsigned VF,
+                                                         bool &FromSVML,
+                                                         bool IsFast) const {
+  FromSVML = ClVectorLibrary == SVML;
   F = sanitizeFunctionName(F);
   if (F.empty())
     return F;
   std::vector<VecDesc>::const_iterator I =
       llvm::lower_bound(VectorDescs, F, compareWithScalarFnName);
   while (I != VectorDescs.end() && StringRef(I->ScalarFnName) == F) {
-    if (I->VectorizationFactor == VF)
+    if (I->VectorizationFactor == VF) {
+      if (FromSVML) {
+        return svmlMangle(I->VectorFnName, IsFast);
+      }
       return I->VectorFnName;
+    }
     ++I;
   }
-  return StringRef();
+  return std::string();
 }
 
 StringRef TargetLibraryInfoImpl::getScalarizedFunction(StringRef F,
